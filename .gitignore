@@ -1,0 +1,12 @@
+node_modules
+dist
+*.local
+.DS_Store
+.vite
+
+# IDE
+.vs/
+
+# Original source GLBs are duplicated under public/models (the served copy),
+# so the top-level copies are not tracked to keep the repo lean.
+/models/

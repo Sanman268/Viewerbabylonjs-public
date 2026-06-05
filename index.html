@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Suspension Viewer — Babylon.js</title>
+  </head>
+  <body>
+    <div id="app">
+      <!-- WebGL render target -->
+      <canvas id="renderCanvas" touch-action="none"></canvas>
+
+      <!-- Loading / error overlay (shown until the model is ready) -->
+      <div id="loadingOverlay" class="overlay" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="loadingText" class="overlay__text">Loading model…</p>
+      </div>
+
+      <!-- Top toolbar -->
+      <header class="toolbar">
+        <h1 class="toolbar__title">Double-Axle Suspension</h1>
+        <div class="toolbar__actions">
+          <input
+            id="searchInput"
+            class="search"
+            type="search"
+            placeholder="Search parts…"
+            autocomplete="off"
+            aria-label="Search parts by name"
+          />
+          <button id="resetBtn" class="btn" type="button" title="Reset view (R)">
+            Reset view
+          </button>
+        </div>
+      </header>
+
+      <!-- Selection info panel -->
+      <aside id="infoPanel" class="panel panel--empty" aria-live="polite">
+        <div class="panel__placeholder">
+          <p class="panel__hint">Click a part to inspect it.</p>
+          <p class="panel__sub">Drag to rotate · scroll / pinch to zoom</p>
+        </div>
+      </aside>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
