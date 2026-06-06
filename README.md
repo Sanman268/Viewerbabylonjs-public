@@ -16,6 +16,7 @@ highlights the selected part, and shows a part information panel with mesh-deriv
 * Smooth orbit and zoom controls with sensible limits.
 * Reset view button and `R` keyboard shortcut.
 * Click / tap part selection with non-destructive highlight.
+* Hover highlight with a part-name tooltip on desktop (mouse) pointers.
 * Click empty space or press `Esc` to clear selection.
 * Info panel showing:
 
@@ -24,6 +25,7 @@ highlights the selected part, and shows a part information panel with mesh-deriv
   * vertices, triangles, materials, dimensions;
   * optional extra attributes from `public/metadata/parts.json`.
 * Search by part name.
+* Optional **Stats** toggle showing FPS, mesh counts, triangle count, and the active model variant (sampled twice a second, not per frame).
 * Desktop and mobile support, including touch selection and pinch zoom.
 * Device-aware model loading with a lighter GLB variant for mobile.
 

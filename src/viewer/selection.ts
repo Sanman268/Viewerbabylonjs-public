@@ -72,7 +72,7 @@ export class SelectionManager {
 
   /** Resolve a picked submesh to its logical part and select it. */
   private selectFromMesh(picked: AbstractMesh): void {
-    const part = toPart(picked);
+    const part = resolvePart(picked);
     if (this.current && this.current.id === part.id) return; // already selected
     this.applySelection(part);
   }
@@ -129,7 +129,7 @@ export class SelectionManager {
    * return it, so the caller can e.g. frame the camera on it.
    */
   selectByMesh(mesh: AbstractMesh): SelectedPart {
-    const part = toPart(mesh);
+    const part = resolvePart(mesh);
     this.applySelection(part);
     return part;
   }
@@ -157,7 +157,7 @@ export class SelectionManager {
  * separated twin on the other side is left out. Limiting the search to siblings
  * stops the fill from chaining across the whole touching assembly.
  */
-function toPart(picked: AbstractMesh): SelectedPart {
+export function resolvePart(picked: AbstractMesh): SelectedPart {
   const parent = picked.parent;
   const siblings = parent
     ? (parent.getChildMeshes(true).filter((m) => m.getTotalVertices() > 0) as AbstractMesh[])

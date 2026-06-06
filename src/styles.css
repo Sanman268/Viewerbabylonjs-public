@@ -103,6 +103,12 @@ body {
   transform: translateY(1px);
 }
 
+.btn--active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .search {
   appearance: none;
   border: 1px solid var(--panel-border);
@@ -335,6 +341,67 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ---------- Hover tooltip ---------- */
+.hover-tooltip {
+  position: fixed;
+  /* Anchored at the pointer; nudge down-right so the cursor doesn't cover it. */
+  transform: translate(14px, 14px);
+  z-index: 40;
+  padding: 4px 8px;
+  max-width: 240px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none; /* never intercept picks/clicks */
+}
+
+.hover-tooltip[hidden] {
+  display: none;
+}
+
+/* ---------- Performance stats overlay ---------- */
+.stats {
+  position: absolute;
+  top: 64px;
+  right: 16px;
+  z-index: 6;
+  min-width: 132px;
+  padding: 8px 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none; /* purely informational */
+}
+
+.stats[hidden] {
+  display: none;
+}
+
+.stats__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.stats__key {
+  color: var(--text-dim);
+}
+
+.stats__val {
+  color: var(--text);
+  font-weight: 500;
 }
 
 /* ---------- Responsive ---------- */

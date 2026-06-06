@@ -3,9 +3,11 @@ import { createScene } from "./viewer/createScene";
 import { CameraController } from "./viewer/camera";
 import { loadModel } from "./viewer/loadModel";
 import { SelectionManager } from "./viewer/selection";
+import { HoverManager } from "./viewer/hover";
 import { InfoPanel } from "./ui/infoPanel";
 import { LoadingOverlay } from "./ui/loadingOverlay";
 import { SearchBox } from "./ui/searchBox";
+import { StatsOverlay } from "./ui/statsOverlay";
 import { loadPartsMetadata } from "./data/metadata";
 
 /**
@@ -21,14 +23,21 @@ async function main(): Promise<void> {
   const { engine, scene } = createScene(canvas);
   const camera = new CameraController(scene, canvas);
   const selection = new SelectionManager(scene);
+  const hover = new HoverManager(scene);
   const infoPanel = new InfoPanel();
+  const stats = new StatsOverlay(engine, scene);
 
   // Core viewer + UI are constructed and the real stylesheet has applied, so
   // drop the boot fallback and reveal the styled app (prevents reload FOUC).
   document.body.classList.remove("app-booting");
 
-  // Selection <-> panel wiring.
-  selection.onSelect = (part) => (part ? infoPanel.show(part) : infoPanel.clear());
+  // Selection <-> panel wiring. The hover layer is told the current selection so
+  // it never competes with the (stronger) selection highlight on those meshes.
+  selection.onSelect = (part) => {
+    hover.setSelected(part);
+    if (part) infoPanel.show(part);
+    else infoPanel.clear();
+  };
   infoPanel.onClear = () => selection.clear();
 
   // Start the render loop immediately so the loading state is responsive.
@@ -37,6 +46,13 @@ async function main(): Promise<void> {
   // --- UI controls -----------------------------------------------------------
   const resetBtn = document.getElementById("resetBtn");
   resetBtn?.addEventListener("click", () => camera.reset());
+
+  const statsBtn = document.getElementById("statsBtn");
+  statsBtn?.addEventListener("click", () => {
+    const on = stats.toggle();
+    statsBtn.setAttribute("aria-pressed", String(on));
+    statsBtn.classList.toggle("btn--active", on);
+  });
 
   // Search shows a dropdown of matching parts; selection happens only when the
   // user picks a result, not while typing.
@@ -73,6 +89,14 @@ async function main(): Promise<void> {
   try {
     const model = await loadModel(scene, (pct) => overlay.setProgress(pct));
     camera.frameToBounds(model.min, model.max);
+
+    // Triangle count is geometry-fixed, so compute it once for the stats overlay.
+    const totalTriangles = model.meshes.reduce(
+      (sum, m) => sum + Math.round(m.getTotalIndices() / 3),
+      0
+    );
+    stats.setModelStats({ variant: model.variant, totalTriangles });
+
     await metadataReady;
     await scene.whenReadyAsync();
     overlay.hide();
@@ -86,6 +110,8 @@ async function main(): Promise<void> {
     window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("resize", onResize);
     searchBox?.dispose();
+    stats.dispose();
+    hover.dispose();
     selection.dispose();
     scene.dispose();
     engine.dispose();

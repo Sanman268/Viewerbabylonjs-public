@@ -13,6 +13,8 @@ export interface LoadedModel {
   /** World-space bounding box of the whole model. */
   min: Vector3;
   max: Vector3;
+  /** Which GLB variant was loaded, surfaced in the stats overlay. */
+  variant: "Desktop" | "Mobile";
 }
 
 /** Pick the lighter GLB on touch / small-screen devices. */
@@ -53,7 +55,8 @@ export async function loadModel(
   scene: Scene,
   onProgress?: (percent: number | null) => void
 ): Promise<LoadedModel> {
-  const file = isMobileDevice() ? MODEL_MOBILE : MODEL_DESKTOP;
+  const mobile = isMobileDevice();
+  const file = mobile ? MODEL_MOBILE : MODEL_DESKTOP;
   // import.meta.env.BASE_URL keeps the path correct under any deploy sub-path.
   const rootUrl = `${import.meta.env.BASE_URL}models/`;
 
@@ -69,5 +72,5 @@ export async function loadModel(
   );
 
   const { min, max } = computeWorldBounds(result.meshes);
-  return { meshes: result.meshes, min, max };
+  return { meshes: result.meshes, min, max, variant: mobile ? "Mobile" : "Desktop" };
 }
