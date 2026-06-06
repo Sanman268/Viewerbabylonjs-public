@@ -168,7 +168,6 @@ A model authored with one clean node or mesh per physical part would make select
 
 * Add a synchronized parts tree / part list.
 * Add isolate, hide/show, and exploded-view controls.
-* Add a performance stats toggle for FPS, draw calls, and triangle count.
 * Improve part grouping using cleaner model hierarchy or geometry connectivity.
 * Add tests for metadata name normalization and selection grouping.
 * Add optional Draco / Meshopt compressed model delivery for larger production assets.

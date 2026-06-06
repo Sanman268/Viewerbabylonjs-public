@@ -1,6 +1,6 @@
 import { HighlightLayer } from "@babylonjs/core/Layers/highlightLayer";
-import "@babylonjs/core/Layers/effectLayerSceneComponent"; // side-effect: registers the effect-layer scene component used by HighlightLayer
-import "@babylonjs/core/Culling/ray"; // side-effect: enables scene.pick ray casting used for selection
+import "@babylonjs/core/Layers/effectLayerSceneComponent"; 
+import "@babylonjs/core/Culling/ray"; 
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { PointerEventTypes } from "@babylonjs/core/Events/pointerEvents";
 import type { Scene } from "@babylonjs/core/scene";

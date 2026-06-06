@@ -3,7 +3,7 @@ import { Scene } from "@babylonjs/core/scene";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { CubeTexture } from "@babylonjs/core/Materials/Textures/cubeTexture";
-import "@babylonjs/core/Materials/Textures/Loaders/envTextureLoader"; // side-effect: enables .env (prefiltered IBL) loading
+import "@babylonjs/core/Materials/Textures/Loaders/envTextureLoader"; 
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 

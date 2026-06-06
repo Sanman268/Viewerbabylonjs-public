@@ -1,6 +1,6 @@
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import "@babylonjs/loaders/glTF"; // registers the .glb/.gltf loader plugin
+import "@babylonjs/loaders/glTF"; 
 import type { Scene } from "@babylonjs/core/scene";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import type { ISceneLoaderProgressEvent } from "@babylonjs/core/Loading/sceneLoader";
