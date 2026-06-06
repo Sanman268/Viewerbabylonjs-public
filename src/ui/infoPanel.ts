@@ -1,5 +1,5 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { getPartMeta } from "../data/metadata";
+import { baseNameOf, getPartMeta, humanise } from "../data/metadata";
 import type { SelectedPart } from "../viewer/selection";
 
 /**
@@ -24,20 +24,30 @@ export class InfoPanel {
   show(part: SelectedPart): void {
     const meta = getPartMeta(part.rawName);
     const stats = computeStats(part);
+    const baseName = baseNameOf(part.rawName);
+
+    // Runtime attributes derived from the selected mesh(es)...
+      const rows: Array<[string, string]> = [
+          ["Mesh name", part.rawName],
+          ["Metadata key", baseName],
+          ["Sub-meshes", String(part.meshes.length)],
+          ["Vertices", stats.vertices.toLocaleString()],
+          ["Triangles", stats.triangles.toLocaleString()],
+          ["Materials", String(stats.materials)],
+          ["Dimensions", stats.dimensions],
+      ];
+
+    // ...merged with any extra attributes from the external metadata map.
+    for (const [key, value] of Object.entries(meta.attributes ?? {})) {
+      rows.push([humanise(key), String(value)]);
+    }
 
     this.el.classList.remove("panel--empty");
     this.el.replaceChildren(
       header(meta.label, this.onClear),
       badge(meta.category),
       paragraph(meta.description, "panel__desc"),
-      attributes([
-        ["Part ID", part.rawName],
-        ["Sub-meshes", String(part.meshes.length)],
-        ["Vertices", stats.vertices.toLocaleString()],
-        ["Triangles", stats.triangles.toLocaleString()],
-        ["Materials", String(stats.materials)],
-        ["Dimensions", stats.dimensions],
-      ])
+      attributes(rows)
     );
   }
 

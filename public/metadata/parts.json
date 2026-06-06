@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "source": "double_axle_suspension",
+  "parts": {
+    "tt_coilover_upper_RL": {
+      "label": "Coilover Damper",
+      "category": "Suspension",
+      "description": "Combined coil spring and shock absorber controlling wheel travel and ride damping.",
+      "attributes": {
+        "system": "Suspension",
+        "inspectionPriority": "High"
+      }
+    },
+    "hopper_frame_crawler": {
+      "label": "Chassis Frame",
+      "category": "Structure",
+      "description": "Main structural frame the suspension and axles mount to.",
+      "attributes": {
+        "system": "Chassis",
+        "inspectionPriority": "Medium"
+      }
+    },
+    "hopper_axle_fr_upper_link_crawler": {
+      "label": "Upper Control Link",
+      "category": "Suspension",
+      "description": "Upper locating link that constrains axle movement through suspension travel.",
+      "attributes": {
+        "system": "Suspension",
+        "inspectionPriority": "High"
+      }
+    },
+    "wheel and tire combined": {
+      "label": "Wheel & Tire",
+      "category": "Wheel",
+      "description": "Road wheel and tire assembly mounted to the hub.",
+      "attributes": {
+        "system": "Wheel",
+        "inspectionPriority": "High"
+      }
+    },
+    "Rear_axle_v3_v2": {
+      "label": "Axle Housing",
+      "category": "Driveline",
+      "description": "Rigid axle housing carrying the differential and hub ends.",
+      "attributes": {
+        "system": "Driveline",
+        "inspectionPriority": "Medium"
+      }
+    },
+    "NurbsPath": {
+      "label": "Brake / Fluid Line",
+      "category": "Brake / Hydraulic",
+      "description": "Routed line following the suspension geometry.",
+      "attributes": {
+        "system": "Hydraulic",
+        "inspectionPriority": "Medium"
+      }
+    }
+  }
+}

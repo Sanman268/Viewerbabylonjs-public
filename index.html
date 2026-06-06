@@ -7,8 +7,47 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Suspension Viewer — Babylon.js</title>
+    <!--
+      Critical inline CSS to prevent a flash of unstyled content (FOUC) on
+      reload, before the bundled stylesheet loads. Keeps the page dark and the
+      canvas full-viewport, and shows a centered fallback while booting.
+    -->
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #14171c;
+        color: #e6e8eb;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+
+      #renderCanvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        outline: none;
+        touch-action: none;
+      }
+
+      body.app-booting > #app {
+        visibility: hidden;
+      }
+
+      body.app-booting::before {
+        content: "Loading 3D viewer…";
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: #9aa3ad;
+      }
+    </style>
   </head>
-  <body>
+  <body class="app-booting">
     <div id="app">
       <!-- WebGL render target -->
       <canvas id="renderCanvas" touch-action="none"></canvas>

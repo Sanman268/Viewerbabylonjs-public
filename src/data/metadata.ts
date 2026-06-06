@@ -1,25 +1,39 @@
 /**
  * Part metadata helpers.
- *
- * The GLB may come from CAD/DCC/Sketchfab-style exports where raw mesh names
- * are noisy, for example:
- *
- *   "tt_coilover_upper_RL.004_Material.005_0"
- *
- * This module intentionally avoids a table of exact model-specific part names.
- * The info panel always starts from the picked mesh/node name, normalises it,
- * then infers a lightweight category from generic mechanical keywords.
+ * Curated labels/categories are NOT held in this file. They live in an external
+ * data file (`public/metadata/parts.json`) loaded at runtime, so adjusting part
+ * metadata never requires touching application logic. The info panel always
+ * starts from the picked mesh/node name, normalises it, looks it up in the
+ * external map, and otherwise infers a lightweight category from generic
+ * mechanical keywords.
  *
  * This keeps the viewer suitable for the practical test:
  * - part names come from mesh data;
+ * - curated metadata is data-driven, not hardcoded in TypeScript;
  * - unknown models still show useful metadata;
  * - no selected part depends on hardcoded object IDs or exact mesh names.
  */
+
+export type MetadataAttributeValue = string | number | boolean;
 
 export interface PartMeta {
     label: string;
     category: string;
     description: string;
+    /** Optional extra key/value attributes sourced from the external map. */
+    attributes?: Record<string, MetadataAttributeValue>;
+}
+
+/** Shape of `public/metadata/parts.json`. */
+export interface PartsMetadataFile {
+    version: number;
+    source: string;
+    parts: Record<
+        string,
+        Omit<PartMeta, "attributes"> & {
+            attributes?: Record<string, MetadataAttributeValue>;
+        }
+    >;
 }
 
 interface CategoryRule {
@@ -27,6 +41,13 @@ interface CategoryRule {
     keywords: string[];
     description: string;
 }
+
+/**
+ * External metadata, populated by `loadPartsMetadata()`. Null until loaded (or
+ * if the fetch fails), in which case `getPartMeta` falls back to generated
+ * metadata so selection keeps working regardless.
+ */
+let metadataFile: PartsMetadataFile | null = null;
 
 /**
  * Reduce a raw glTF node/mesh name to a stable, readable base name.
@@ -167,6 +188,21 @@ function normaliseForMatching(value: string): string {
         .trim();
 }
 
+function findExternalMeta(baseName: string): PartMeta | undefined {
+    const parts = metadataFile?.parts;
+    if (!parts) return undefined;
+
+    const exact = parts[baseName];
+    if (exact) return exact;
+
+    const normalisedBase = normaliseForMatching(baseName);
+    const matchedKey = Object.keys(parts).find(
+        (key) => normaliseForMatching(key) === normalisedBase,
+    );
+
+    return matchedKey ? parts[matchedKey] : undefined;
+}
+
 function inferCategory(baseName: string): Pick<PartMeta, "category" | "description"> {
     const searchable = normaliseForMatching(baseName);
 
@@ -187,9 +223,48 @@ function inferCategory(baseName: string): Pick<PartMeta, "category" | "descripti
     };
 }
 
-/** Generate display metadata for a raw mesh/node name. */
+/**
+ * Fetch the external parts metadata once at startup. The path is resolved
+ * through `import.meta.env.BASE_URL` so it works under a GitHub Pages sub-path.
+ * Any failure is swallowed (logged) — the viewer continues with generated
+ * fallback metadata, so selection never depends on this file being present.
+ */
+export async function loadPartsMetadata(): Promise<void> {
+    try {
+        const url = `${import.meta.env.BASE_URL}metadata/parts.json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = (await response.json()) as PartsMetadataFile;
+        if (data && data.parts) {
+            metadataFile = data;
+        }
+    } catch (error) {
+        console.warn("Parts metadata unavailable; using generated fallback.", error);
+        metadataFile = null;
+    }
+}
+
+/**
+ * Generate display metadata for a raw mesh/node name.
+ *
+ * Lookup order: external map (by base name) first, then generated fallback. The
+ * label always derives from the mesh/node name when no curated label exists, so
+ * nothing is pinned to a hardcoded object id.
+ */
 export function getPartMeta(rawName: string): PartMeta {
     const base = baseNameOf(rawName);
+    const entry = findExternalMeta(base);
+
+    if (entry) {
+        return {
+            label: entry.label || humanise(base) || "Unnamed Part",
+            category: entry.category || "Component",
+            description: entry.description || "",
+            attributes: entry.attributes,
+        };
+    }
+
     const label = humanise(base) || "Unnamed Part";
     const inferred = inferCategory(base);
 

@@ -5,6 +5,7 @@ import { loadModel } from "./viewer/loadModel";
 import { SelectionManager } from "./viewer/selection";
 import { InfoPanel } from "./ui/infoPanel";
 import { LoadingOverlay } from "./ui/loadingOverlay";
+import { loadPartsMetadata } from "./data/metadata";
 
 /**
  * Application entry point. Boots the engine, wires the viewer modules to the UI,
@@ -20,6 +21,10 @@ async function main(): Promise<void> {
   const camera = new CameraController(scene, canvas);
   const selection = new SelectionManager(scene);
   const infoPanel = new InfoPanel();
+
+  // Core viewer + UI are constructed and the real stylesheet has applied, so
+  // drop the boot fallback and reveal the styled app (prevents reload FOUC).
+  document.body.classList.remove("app-booting");
 
   // Selection <-> panel wiring.
   selection.onSelect = (part) => (part ? infoPanel.show(part) : infoPanel.clear());
@@ -46,9 +51,14 @@ async function main(): Promise<void> {
   window.addEventListener("resize", onResize);
 
   // --- Load the model --------------------------------------------------------
+  // Kick off metadata loading in parallel with the model. Selection falls back
+  // to generated metadata if this hasn't resolved yet, so it never blocks.
+  const metadataReady = loadPartsMetadata();
+
   try {
     const model = await loadModel(scene, (pct) => overlay.setProgress(pct));
     camera.frameToBounds(model.min, model.max);
+    await metadataReady;
     await scene.whenReadyAsync();
     overlay.hide();
   } catch (err) {

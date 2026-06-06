@@ -53,9 +53,10 @@ src/
     infoPanel.ts         # renders the selected part's name + attributes
     loadingOverlay.ts    # loading / progress / error states
   data/
-    metadata.ts          # mesh-name normalization + part metadata mapping
+    metadata.ts          # mesh-name normalization + external metadata loader
 public/
   models/                # GLB assets (desktop + mobile variants)
+  metadata/parts.json    # data-driven part labels/categories (curated mapping)
   environment.env        # prefiltered IBL environment (for PBR reflections)
 ```
 
@@ -85,11 +86,13 @@ other.
   (no CDN dependency) so the demo is self-contained and the colors match the
   source model.
 
-- **Attributes are computed, with a metadata overlay.** `data/metadata.ts` maps
-  a normalized base name to a friendly label/category/description, and falls back
-  to a humanized name for anything unmapped. Quantitative attributes (vertices,
-  triangles, materials, dimensions) are read from the mesh data, so the panel
-  always has real content.
+- **Data-driven metadata, computed attributes.** Curated part labels/categories
+  live in `public/metadata/parts.json` (not in TypeScript), loaded at runtime and
+  keyed by the normalized mesh base name. Unknown meshes fall back to a label
+  generated from the mesh/node name plus a keyword-inferred category, so the
+  panel always has content even if the JSON is missing. Quantitative attributes
+  (vertices, triangles, materials, dimensions) are always read from the selected
+  GLB mesh; any extra attributes in the JSON are merged in alongside them.
 
 - **No per-frame work for interaction.** Picking and highlighting are driven by
   pointer events (`POINTERTAP`), never polled in the render loop. `POINTERTAP`
