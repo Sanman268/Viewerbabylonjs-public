@@ -88,6 +88,8 @@ src/
   ui/
     infoPanel.ts
     loadingOverlay.ts
+    statsOverlay.ts
+    search.ts
   data/
     metadata.ts
 
@@ -164,7 +166,6 @@ A model authored with one clean node or mesh per physical part would make select
 
 ## What I would improve with more time
 
-* Add hover highlight and tooltip.
 * Add a synchronized parts tree / part list.
 * Add isolate, hide/show, and exploded-view controls.
 * Add a performance stats toggle for FPS, draw calls, and triangle count.
@@ -172,4 +173,4 @@ A model authored with one clean node or mesh per physical part would make select
 * Add tests for metadata name normalization and selection grouping.
 * Add optional Draco / Meshopt compressed model delivery for larger production assets.
 
-For deeper implementation details, see [`docs/TECHNICAL_NOTES.md`](docs/TECHNICAL_NOTES.md).
+For deeper implementation details, see [`docs/TECHNICAL_NOTES.docx`].
