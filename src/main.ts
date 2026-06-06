@@ -5,6 +5,7 @@ import { loadModel } from "./viewer/loadModel";
 import { SelectionManager } from "./viewer/selection";
 import { InfoPanel } from "./ui/infoPanel";
 import { LoadingOverlay } from "./ui/loadingOverlay";
+import { SearchBox } from "./ui/searchBox";
 import { loadPartsMetadata } from "./data/metadata";
 
 /**
@@ -37,8 +38,22 @@ async function main(): Promise<void> {
   const resetBtn = document.getElementById("resetBtn");
   resetBtn?.addEventListener("click", () => camera.reset());
 
+  // Search shows a dropdown of matching parts; selection happens only when the
+  // user picks a result, not while typing.
   const searchInput = document.getElementById("searchInput") as HTMLInputElement | null;
-  searchInput?.addEventListener("input", () => selection.selectFirstMatch(searchInput.value));
+  const searchResults = document.getElementById("searchResults");
+  let searchBox: SearchBox | null = null;
+  if (searchInput && searchResults) {
+    searchBox = new SearchBox({
+      input: searchInput,
+      results: searchResults,
+      find: (q) => selection.findMatches(q),
+      onPick: (match) => {
+        const part = selection.selectByMesh(match.mesh);
+        camera.focusOnMeshes(part.meshes); // zoom-to-fit the chosen part
+      },
+    });
+  }
 
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.target instanceof HTMLInputElement) return; // don't hijack typing
@@ -70,6 +85,7 @@ async function main(): Promise<void> {
   const dispose = () => {
     window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("resize", onResize);
+    searchBox?.dispose();
     selection.dispose();
     scene.dispose();
     engine.dispose();

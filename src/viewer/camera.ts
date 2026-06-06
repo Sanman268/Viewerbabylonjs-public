@@ -4,6 +4,7 @@ import { Animation } from "@babylonjs/core/Animations/animation";
 import { CubicEase, EasingFunction } from "@babylonjs/core/Animations/easing";
 import "@babylonjs/core/Animations/animatable"; // enables scene.beginAnimation used by reset
 import type { Scene } from "@babylonjs/core/scene";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 
 interface CameraHome {
   alpha: number;
@@ -104,4 +105,65 @@ export class CameraController {
       ease
     );
   }
+
+  /**
+   * Zoom-to-fit a subset of meshes (e.g. a part chosen from search): animate the
+   * orbit target onto the part and the radius so it fills the view. The current
+   * viewing angle and the recorded "home" view are left untouched, so Reset
+   * still returns to the full-model framing.
+   */
+  focusOnMeshes(meshes: AbstractMesh[]): void {
+    const min = new Vector3(Infinity, Infinity, Infinity);
+    const max = new Vector3(-Infinity, -Infinity, -Infinity);
+    for (const mesh of meshes) {
+      if (mesh.getTotalVertices() === 0) continue;
+      mesh.computeWorldMatrix(true);
+      const bb = mesh.getBoundingInfo().boundingBox;
+      min.minimizeInPlace(bb.minimumWorld);
+      max.maximizeInPlace(bb.maximumWorld);
+    }
+    if (!isFinite(min.x)) return; // nothing pickable to frame
+
+    const center = min.add(max).scale(0.5);
+    const diagonal = max.subtract(min).length() || 1;
+    // 1.6× leaves margin around a single part; clamp to the configured zoom
+    // limits so we never push through the near plane or past the far limit.
+    const radius = clamp(
+      diagonal * 1.6,
+      this.camera.lowerRadiusLimit ?? 0,
+      this.camera.upperRadiusLimit ?? Number.MAX_VALUE
+    );
+
+    const ease = new CubicEase();
+    ease.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+    const fps = 60;
+    const frames = 30;
+
+    Animation.CreateAndStartAnimation(
+      "focus_radius",
+      this.camera,
+      "radius",
+      fps,
+      frames,
+      this.camera.radius,
+      radius,
+      Animation.ANIMATIONLOOPMODE_CONSTANT,
+      ease
+    );
+    Animation.CreateAndStartAnimation(
+      "focus_target",
+      this.camera,
+      "target",
+      fps,
+      frames,
+      this.camera.target.clone(),
+      center,
+      Animation.ANIMATIONLOOPMODE_CONSTANT,
+      ease
+    );
+  }
+}
+
+function clamp(value: number, lo: number, hi: number): number {
+  return Math.min(Math.max(value, lo), hi);
 }

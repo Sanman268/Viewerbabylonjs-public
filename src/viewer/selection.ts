@@ -9,7 +9,7 @@ import type { PointerInfo } from "@babylonjs/core/Events/pointerEvents";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { baseNameOf } from "../data/metadata";
+import { baseNameOf, getPartMeta } from "../data/metadata";
 
 export interface SelectedPart {
   /** Unique id of the selected mesh. */
@@ -18,6 +18,16 @@ export interface SelectedPart {
   rawName: string;
   /** The selected mesh(es) — one per click in this viewer. */
   meshes: AbstractMesh[];
+}
+
+/** A single search-dropdown result: a part type and a mesh to select it by. */
+export interface PartMatch {
+  /** Display label (curated or humanised). */
+  label: string;
+  /** Functional category, shown as a secondary hint. */
+  category: string;
+  /** A representative mesh of the part, used to perform the selection. */
+  mesh: AbstractMesh;
 }
 
 // Orange contrasts with both the blue-painted springs and the dark metal, so a
@@ -85,25 +95,43 @@ export class SelectionManager {
   }
 
   /**
-   * Select the first part whose name or base name matches a query (used by the
-   * search box). Returns true if something was selected.
+   * Find distinct parts whose label or name matches a query, for the search
+   * dropdown. Results are deduplicated by base name so each logical part type
+   * appears once, ranked with label-prefix matches first.
    */
-  selectFirstMatch(query: string): boolean {
+  findMatches(query: string, limit = 8): PartMatch[] {
     const q = query.trim().toLowerCase();
-    if (!q) {
-      this.clear();
-      return false;
-    }
+    if (!q) return [];
+
+    const seen = new Set<string>();
+    const matches: PartMatch[] = [];
     for (const mesh of this.scene.meshes) {
       if (mesh.getTotalVertices() === 0) continue;
-      const name = mesh.name.toLowerCase();
-      const base = baseNameOf(mesh.name).toLowerCase();
-      if (name.includes(q) || base.includes(q)) {
-        this.applySelection(toPart(mesh));
-        return true;
-      }
+      const base = baseNameOf(mesh.name);
+      if (seen.has(base)) continue;
+      const meta = getPartMeta(mesh.name);
+      const haystack = `${mesh.name} ${base} ${meta.label}`.toLowerCase();
+      if (!haystack.includes(q)) continue;
+      seen.add(base);
+      matches.push({ label: meta.label, category: meta.category, mesh });
     }
-    return false;
+
+    matches.sort((a, b) => {
+      const ap = a.label.toLowerCase().startsWith(q) ? 0 : 1;
+      const bp = b.label.toLowerCase().startsWith(q) ? 0 : 1;
+      return ap - bp || a.label.localeCompare(b.label);
+    });
+    return matches.slice(0, limit);
+  }
+
+  /**
+   * Select the part containing the given mesh (used by the search dropdown) and
+   * return it, so the caller can e.g. frame the camera on it.
+   */
+  selectByMesh(mesh: AbstractMesh): SelectedPart {
+    const part = toPart(mesh);
+    this.applySelection(part);
+    return part;
   }
 
   dispose(): void {

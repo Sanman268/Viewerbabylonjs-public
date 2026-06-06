@@ -62,14 +62,21 @@
       <header class="toolbar">
         <h1 class="toolbar__title">Double-Axle Suspension</h1>
         <div class="toolbar__actions">
-          <input
-            id="searchInput"
-            class="search"
-            type="search"
-            placeholder="Search parts…"
-            autocomplete="off"
-            aria-label="Search parts by name"
-          />
+          <div class="search-wrap">
+            <input
+              id="searchInput"
+              class="search"
+              type="search"
+              placeholder="Search parts…"
+              autocomplete="off"
+              role="combobox"
+              aria-expanded="false"
+              aria-autocomplete="list"
+              aria-controls="searchResults"
+              aria-label="Search parts by name"
+            />
+            <ul id="searchResults" class="search-results" role="listbox" hidden></ul>
+          </div>
           <button id="resetBtn" class="btn" type="button" title="Reset view (R)">
             Reset view
           </button>

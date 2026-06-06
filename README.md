@@ -1,158 +1,173 @@
 # Babylon.js Suspension Viewer
 
-An interactive 3D viewer for a double-axle suspension assembly. Load the model
-in the browser, orbit and zoom, click parts to highlight them, and read each
-part's name and attributes in an info panel.
+Interactive Babylon.js WebGL viewer for a double-axle suspension GLB model.
 
-**Live demo:** https://sanman268.github.io/Viewerbabylonjs/
+The demo loads a 3D model in the browser, frames it automatically, supports orbit / zoom controls, lets the user click individual parts, 
+highlights the selected part, and shows a part information panel with mesh-derived attributes and optional metadata.
+
+**Live demo:** https://sanman268.github.io/Viewerbabylonjs-public/
 
 ---
 
 ## Features
 
-- **Reliable GLB loading** with a loading state, progress, and an error fallback.
-- **Auto-frame on load** — the model is centered and scaled to fit the camera.
-- **Orbit / zoom controls** with sensible zoom limits; the model stays centered.
-- **Animated "Reset view"** control (button, or press `R`).
-- **Click to select** a single physical part; it highlights clearly (orange,
-  non-destructive). Clicking empty space (or `Esc`) clears the selection.
-- **Info panel** showing the part name plus model-derived attributes
-  (vertices, triangles, materials, dimensions).
-- **Search** parts by name.
-- **Desktop + mobile**: tap-to-select, pinch-zoom, and a lighter GLB on phones.
+* GLB loading with loading progress and error fallback.
+* Automatic model centering and camera framing on load.
+* Smooth orbit and zoom controls with sensible limits.
+* Reset view button and `R` keyboard shortcut.
+* Click / tap part selection with non-destructive highlight.
+* Click empty space or press `Esc` to clear selection.
+* Info panel showing:
+
+  * selected mesh / part name;
+  * metadata category and description;
+  * vertices, triangles, materials, dimensions;
+  * optional extra attributes from `public/metadata/parts.json`.
+* Search by part name.
+* Desktop and mobile support, including touch selection and pinch zoom.
+* Device-aware model loading with a lighter GLB variant for mobile.
+
+---
 
 ## Tech stack
 
-- [Babylon.js](https://www.babylonjs.com/) (`@babylonjs/core` + `@babylonjs/loaders`)
-- TypeScript
-- [Vite](https://vitejs.dev/) for dev server and build
-- No UI framework — plain DOM for the overlay/panel to keep things small and readable.
+* Babylon.js
+* TypeScript
+* Vite
+* Plain DOM UI, no frontend framework
 
-## Getting started
+---
 
-**Prerequisites:** Node.js 18+ and npm.
+## Setup and build
+
+Prerequisites:
+
+* Node.js 18+
+* npm
+
+Install dependencies:
 
 ```bash
-npm install      # install dependencies
-npm run dev      # start the dev server (http://localhost:5173)
-npm run build    # type-check + production build into dist/
-npm run preview  # serve the production build locally
+npm install
 ```
+
+Run locally:
+
+```bash
+npm run dev
+```
+
+Build production bundle:
+
+```bash
+npm run build
+```
+
+Preview the production build locally:
+
+```bash
+npm run preview
+```
+
+The production output is generated in `dist/`.
+
+---
 
 ## Project structure
 
-```
+```txt
 src/
-  main.ts                # entry point: wires modules together, render loop, teardown
+  main.ts
   viewer/
-    createScene.ts       # engine, scene, IBL + lights
-    camera.ts            # ArcRotateCamera, zoom limits, animated reset
-    loadModel.ts         # GLB load (device-aware), centering, world bounds
-    selection.ts         # pointer picking, highlight, spatial part grouping
+    createScene.ts
+    camera.ts
+    loadModel.ts
+    selection.ts
   ui/
-    infoPanel.ts         # renders the selected part's name + attributes
-    loadingOverlay.ts    # loading / progress / error states
+    infoPanel.ts
+    loadingOverlay.ts
   data/
-    metadata.ts          # mesh-name normalization + external metadata loader
+    metadata.ts
+
 public/
-  models/                # GLB assets (desktop + mobile variants)
-  metadata/parts.json    # data-driven part labels/categories (curated mapping)
-  environment.env        # prefiltered IBL environment (for PBR reflections)
+  models/
+    double_axle_suspension-v1.glb
+    double_axle_suspension-v1_Mobile.glb
+  metadata/
+    parts.json
+  environment.env
 ```
 
-The split mirrors responsibilities: everything 3D lives in `viewer/`, everything
-DOM lives in `ui/`, and they communicate through small typed callbacks
-(`SelectionManager.onSelect`, `InfoPanel.onClear`) rather than reaching into each
-other.
+---
 
-## Approach & key decisions
+## Approach and decisions
 
-- **Selection = one physical part, derived from mesh data.** This GLB is a
-  Sketchfab export: a parent node can contain *two* physical objects (e.g. the
-  left **and** right wheel), and each object is split by material into separate
-  meshes (tire vs rim). So neither "the picked mesh" (a fragment) nor "all of the
-  parent's children" (two wheels) is correct. On click, the viewer flood-fills
-  from the picked mesh to **sibling meshes whose world bounding boxes overlap**,
-  grouping the slices of one physical object while excluding its spatially
-  separated twin. Part names always come from the mesh/node name — nothing is
-  hardcoded per object.
+### Model loading and framing
 
-- **Non-destructive highlighting.** Selection uses a Babylon `HighlightLayer`
-  (an overlay glow), so original materials are never mutated and clearing or
-  changing the selection always restores the model exactly.
+The viewer loads a GLB from the `public/models` folder. After loading, the model bounds are calculated and the camera is framed around 
+the model so the assembly starts centered and visible.
 
-- **IBL lighting.** The metal parts are PBR metallic/roughness, which need an
-  environment to reflect. A small prefiltered `.env` is bundled in `public/`
-  (no CDN dependency) so the demo is self-contained and the colors match the
-  source model.
+A lighter model variant is used for mobile / touch devices to reduce load and rendering cost.
 
-- **Data-driven metadata, computed attributes.** Curated part labels/categories
-  live in `public/metadata/parts.json` (not in TypeScript), loaded at runtime and
-  keyed by the normalized mesh base name. Unknown meshes fall back to a label
-  generated from the mesh/node name plus a keyword-inferred category, so the
-  panel always has content even if the JSON is missing. Quantitative attributes
-  (vertices, triangles, materials, dimensions) are always read from the selected
-  GLB mesh; any extra attributes in the JSON are merged in alongside them.
+### Camera controls
 
-- **No per-frame work for interaction.** Picking and highlighting are driven by
-  pointer events (`POINTERTAP`), never polled in the render loop. `POINTERTAP`
-  also distinguishes a tap from an orbit-drag, which is what makes touch behave.
+The viewer uses an orbit camera so the model stays centered while the user rotates and zooms. 
+Zoom limits are applied to avoid clipping into the model or zooming too far away.
 
-- **Deploy-anywhere build.** `base: "./"` emits relative asset paths and the
-  runtime resolves the model via `import.meta.env.BASE_URL`, so the same `dist/`
-  works at a domain root or under a project sub-path.
+The reset control returns the camera to a good default view.
 
-## Controls
+### Selection and highlight
 
-| Action          | Desktop                | Mobile           |
-| --------------- | ---------------------- | ---------------- |
-| Rotate          | Left-drag              | One-finger drag  |
-| Zoom            | Mouse wheel            | Pinch            |
-| Select part     | Click                  | Tap              |
-| Clear selection | Click empty space / `Esc` | Tap empty space |
-| Reset view      | `Reset view` button / `R` | Reset button   |
+Selection is driven by pointer/tap events rather than per-frame polling.
 
-## Deployment
+The selected part is highlighted using a Babylon highlight layer. Original mesh materials are not modified, so clearing or changing selection restores the model correctly.
 
-A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds and publishes
-`dist/` to **GitHub Pages** on every push to the default branch.
+### Metadata and info panel
 
-1. Push the repo to GitHub.
-2. In **Settings → Pages**, set **Source = GitHub Actions**.
-3. Push to `main`/`master` (or run the workflow manually). The live URL appears
-   in the Actions run summary and on the Pages settings page.
+Part names are derived from the selected mesh / node data.
 
-The build is a static bundle, so it also drops straight onto **Netlify** or
-**Vercel** (build command `npm run build`, output directory `dist`).
+Curated labels and categories are stored in `public/metadata/parts.json` and loaded at runtime. 
+This keeps metadata data-driven instead of hardcoded in TypeScript.
+
+If a selected mesh is not found in the metadata JSON, the viewer generates a fallback label and category from the mesh name.
+The quantitative attributes in the info panel, such as vertices, triangles, material count, and dimensions, 
+are computed from the selected Babylon mesh data.
+
+### Mobile behavior
+
+The viewer supports touch rotation, pinch zoom, and tap selection. A small inline boot style prevents a flash of unstyled HTML before the application CSS and loading overlay are ready.
+
+---
 
 ## Assumptions
 
-- The provided GLB has meaningfully named meshes/nodes; part names are derived
-  from them rather than hardcoded.
-- Two GLB variants are provided; the lighter `*_Mobile.glb` is used on
-  touch/small-screen devices to keep load and rendering light.
-- Dimensions are reported in the model's own units (the source has no real-world
-  scale metadata).
-- No branding requirements — the UI is intentionally minimal and functional.
+* The GLB has named meshes or nodes that can be used to display part names.
+* Some exported mesh names may be noisy, so the app normalizes names before metadata lookup.
+* The source model does not include real-world unit metadata, so dimensions are shown in model units.
+* The UI is intentionally simple and functional; there are no branding requirements.
+* The metadata JSON is optional. If it fails to load, the viewer still works with generated fallback metadata.
+
+---
 
 ## Known limitations
 
-- **Imperfect physical grouping on an awkward model.** The bounding-box flood
-  fill groups one wheel's tire+rim correctly, but it relies on a spatial overlap
-  threshold. On parts authored with unusual gaps or heavy material merging it can
-  occasionally under- or over-group. A model authored with one mesh (or node) per
-  physical part would make this exact.
-- The bundled `.env` is a neutral studio environment, so reflections won't be
-  pixel-identical to the source's original environment.
-- No tone-mapping/post-processing is applied, to keep colors matching the source.
+* Part grouping depends on the structure of the source GLB. 
+A model authored with one clean node or mesh per physical part would make selection more exact.
+* Some metadata entries are curated examples rather than a complete engineering dataset.
+* The mobile GLB is lighter, but very low-end phones may still take time to load the model.
+* The lighting uses a bundled neutral environment and may not exactly match the source model’s original look.
+* No advanced post-processing or configurator options are included.
 
-## What I'd build next with more time
+---
 
-- **Robust part grouping** via connected-component analysis on shared vertices
-  (true geometry connectivity) instead of bounding-box overlap.
-- **Hover highlight + tooltip**, and an **outline** highlight option.
-- A **parts list / tree** synced with selection and search.
-- **Exploded view** and per-part isolate/hide.
-- A **performance stats** toggle (FPS, draw calls) and optional mesh merging by
-  material to reduce draw calls.
-- Unit tests for the name-normalization and grouping logic.
+## What I would improve with more time
+
+* Add hover highlight and tooltip.
+* Add a synchronized parts tree / part list.
+* Add isolate, hide/show, and exploded-view controls.
+* Add a performance stats toggle for FPS, draw calls, and triangle count.
+* Improve part grouping using cleaner model hierarchy or geometry connectivity.
+* Add tests for metadata name normalization and selection grouping.
+* Add optional Draco / Meshopt compressed model delivery for larger production assets.
+
+For deeper implementation details, see [`docs/TECHNICAL_NOTES.md`](docs/TECHNICAL_NOTES.md).
