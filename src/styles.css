@@ -32,10 +32,10 @@ body {
   /* Studio backdrop — the WebGL canvas clears to transparent so this shows
      through, giving a soft product-shot gradient behind the model. */
   background: radial-gradient(
-    120% 120% at 50% 30%,
-    #2b313d 0%,
-    #1a1d24 55%,
-    #0d0e12 100%
+    120% 120% at 50% 35%,
+    #9aa1ab 0%,
+    #6b727c 45%,
+    #3f444c 100%
   );
 }
 

@@ -85,6 +85,9 @@ src/
     camera.ts
     loadModel.ts
     selection.ts
+    recolor.ts        # studio "design-tool" colour scheme
+    renderPipeline.ts # SSAO + SSR + KHR-neutral tone mapping + bloom/MSAA/FXAA
+    groundShadow.ts   # PCSS contact-hardening soft shadow (shadow-only ground)
   ui/
     infoPanel.ts
     loadingOverlay.ts
@@ -99,7 +102,8 @@ public/
     double_axle_suspension-v1_Mobile.glb
   metadata/
     parts.json
-  environment.env
+  environment.env     # original neutral studio IBL
+  studio.env          # brighter studio-softbox IBL (active)
 ```
 
 ---

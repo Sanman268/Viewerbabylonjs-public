@@ -10,6 +10,8 @@ import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 export interface ViewerContext {
   engine: Engine;
   scene: Scene;
+  /** Directional key light, reused as the contact-shadow caster. */
+  keyLight: DirectionalLight;
 }
 
 /**
@@ -26,29 +28,37 @@ export function createScene(canvas: HTMLCanvasElement): ViewerContext {
     stencil: true, // required by the HighlightLayer used for selection
     antialias: true,
   });
-  engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, 2));
+  // Supersample (SSAA): render above display resolution and downsample for crisp
+  // edges and reflections. Capped at 2x device-independent pixels so high-DPI
+  // screens don't blow up the framebuffer.
+  const renderScale = Math.min((window.devicePixelRatio || 1) * 1.5, 2);
+  engine.setHardwareScalingLevel(1 / renderScale);
 
   const scene = new Scene(engine);
   // Transparent clear so the CSS gradient backdrop is visible behind the model.
   scene.clearColor = new Color4(0, 0, 0, 0);
 
   // Image-based lighting: PBR metallic/roughness materials reflect this
-  // environment, so without it metal parts render dark/flat. The .env is a
-  // small prefiltered cube bundled in /public, keeping the demo self-contained.
+  // environment, so without it metal parts render dark/flat. studio.env is a
+  // prefiltered studio-softbox cube (bundled in /public) — its bright, defined
+  // light sources give the metals crisp product-shot reflections.
   scene.environmentTexture = CubeTexture.CreateFromPrefilteredData(
-    `${import.meta.env.BASE_URL}environment.env`,
+    `${import.meta.env.BASE_URL}studio.env`,
     scene
   );
-  scene.environmentIntensity = 1.0;
+  // Moderate IBL: enough to light the metals, but not so bright it floods the
+  // painted parts to white and flattens the form.
+  scene.environmentIntensity = 1.55;
 
-  // Soft ambient fill so shadowed faces stay legible alongside the IBL.
+  // Light ambient fill — kept low so the directional key still shapes the form.
   const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
-  hemi.intensity = 0.5;
-  hemi.groundColor = new Color3(0.25, 0.27, 0.3);
+  hemi.intensity = 0.4;
+  hemi.groundColor = new Color3(0.3, 0.32, 0.35);
 
-  // Single directional key light for form and specular highlights.
+  // Directional key light shapes the form and adds specular — kept moderate so
+  // it doesn't stack with the IBL and wash flat white panels to pure white.
   const key = new DirectionalLight("key", new Vector3(-0.5, -1, -0.6), scene);
-  key.intensity = 1.0;
+  key.intensity = 1.3;
 
-  return { engine, scene };
+  return { engine, scene, keyLight: key };
 }

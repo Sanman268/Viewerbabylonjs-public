@@ -2,6 +2,9 @@ import "./styles.css";
 import { createScene } from "./viewer/createScene";
 import { CameraController } from "./viewer/camera";
 import { loadModel } from "./viewer/loadModel";
+import { applyVectaryLook, type RenderLook } from "./viewer/renderPipeline";
+import { recolorVectary } from "./viewer/recolor";
+import { addGroundShadow, type GroundShadow } from "./viewer/groundShadow";
 import { SelectionManager } from "./viewer/selection";
 import { HoverManager } from "./viewer/hover";
 import { InfoPanel } from "./ui/infoPanel";
@@ -20,7 +23,7 @@ async function main(): Promise<void> {
   if (!canvas) throw new Error("Render canvas not found");
 
   const overlay = new LoadingOverlay();
-  const { engine, scene } = createScene(canvas);
+  const { engine, scene, keyLight } = createScene(canvas);
   const camera = new CameraController(scene, canvas);
   const selection = new SelectionManager(scene);
   const hover = new HoverManager(scene);
@@ -86,9 +89,22 @@ async function main(): Promise<void> {
   // to generated metadata if this hasn't resolved yet, so it never blocks.
   const metadataReady = loadPartsMetadata();
 
+  let look: RenderLook | null = null;
+  let shadow: GroundShadow | null = null;
   try {
     const model = await loadModel(scene, (pct) => overlay.setProgress(pct));
     camera.frameToBounds(model.min, model.max);
+
+    // Re-skin the dark greyscale GLB with a colour-coded "design-tool" palette.
+    recolorVectary(scene);
+
+    // Soft contact shadow to ground the model (shadow-only ground, transparent
+    // elsewhere so the backdrop and object look are unchanged).
+    shadow = addGroundShadow(scene, keyLight, model.meshes, model.min, model.max);
+
+    // Studio "design-tool" render look (SSAO + ACES tone mapping + AA). Set up
+    // after framing so the SSAO radius can be scaled to the model's real size.
+    look = applyVectaryLook(scene, camera.camera, model.min, model.max);
 
     // Triangle count is geometry-fixed, so compute it once for the stats overlay.
     const totalTriangles = model.meshes.reduce(
@@ -110,6 +126,8 @@ async function main(): Promise<void> {
     window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("resize", onResize);
     searchBox?.dispose();
+    shadow?.dispose();
+    look?.dispose();
     stats.dispose();
     hover.dispose();
     selection.dispose();
