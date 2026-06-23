@@ -2,6 +2,7 @@ import "./styles.css";
 import { createScene } from "./viewer/createScene";
 import { CameraController } from "./viewer/camera";
 import { loadModel } from "./viewer/loadModel";
+import { addShadowPlane } from "./viewer/shadowPlane";
 import { SelectionManager } from "./viewer/selection";
 import { HoverManager } from "./viewer/hover";
 import { InfoPanel } from "./ui/infoPanel";
@@ -44,8 +45,52 @@ async function main(): Promise<void> {
   engine.runRenderLoop(() => scene.render());
 
   // --- UI controls -----------------------------------------------------------
+  // Camera mode toggle: orbit (default) <-> keyboard walk mode. Several actions
+  // (reset, search focus) force orbit mode, so keep the button in sync via a
+  // shared updater rather than tracking state separately.
+  const walkBtn = document.getElementById("walkBtn");
+  const walkHint = document.getElementById("walkHint");
+  const walkHintClose = document.getElementById("walkHintClose");
+  let walkHintTimer: number | undefined;
+  // Once the user dismisses the hint, respect that for the rest of the session.
+  let walkHintDismissed = false;
+
+  const hideWalkHint = () => {
+    window.clearTimeout(walkHintTimer);
+    walkHint?.classList.remove("is-visible");
+    // Wait for the fade-out before removing from layout.
+    walkHintTimer = window.setTimeout(() => walkHint?.setAttribute("hidden", ""), 200);
+  };
+  const showWalkHint = () => {
+    if (!walkHint || walkHintDismissed) return;
+    window.clearTimeout(walkHintTimer);
+    walkHint.removeAttribute("hidden");
+    // Next frame so the transition runs from the hidden state.
+    requestAnimationFrame(() => walkHint.classList.add("is-visible"));
+  };
+  const dismissWalkHint = () => {
+    walkHintDismissed = true; // user dismissed it — stays closed for the session
+    hideWalkHint();
+  };
+  walkHintClose?.addEventListener("click", dismissWalkHint);
+
+  const syncWalkBtn = () => {
+    const walking = camera.mode === "walk";
+    walkBtn?.setAttribute("aria-pressed", String(walking));
+    walkBtn?.classList.toggle("btn--active", walking);
+    if (!walking) hideWalkHint(); // leaving walk mode hides the hint
+  };
+  walkBtn?.addEventListener("click", () => {
+    const mode = camera.toggleMode();
+    syncWalkBtn();
+    if (mode === "walk") showWalkHint();
+  });
+
   const resetBtn = document.getElementById("resetBtn");
-  resetBtn?.addEventListener("click", () => camera.reset());
+  resetBtn?.addEventListener("click", () => {
+    camera.reset();
+    syncWalkBtn();
+  });
 
   const statsBtn = document.getElementById("statsBtn");
   statsBtn?.addEventListener("click", () => {
@@ -67,14 +112,24 @@ async function main(): Promise<void> {
       onPick: (match) => {
         const part = selection.selectByMesh(match.mesh);
         camera.focusOnMeshes(part.meshes); // zoom-to-fit the chosen part
+        syncWalkBtn(); // focus returns to orbit mode
       },
     });
   }
 
+  const WALK_KEY_CODES = new Set([
+    "KeyW", "KeyA", "KeyS", "KeyD",
+    "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+  ]);
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.target instanceof HTMLInputElement) return; // don't hijack typing
-    if (e.key === "r" || e.key === "R") camera.reset();
+    if (e.key === "r" || e.key === "R") {
+      camera.reset();
+      syncWalkBtn();
+    }
     if (e.key === "Escape") selection.clear();
+    // Starting to walk dismisses the instructions popup naturally.
+    if (camera.mode === "walk" && WALK_KEY_CODES.has(e.code)) dismissWalkHint();
   };
   window.addEventListener("keydown", onKeyDown);
 
@@ -89,6 +144,9 @@ async function main(): Promise<void> {
   try {
     const model = await loadModel(scene, (pct) => overlay.setProgress(pct));
     camera.frameToBounds(model.min, model.max);
+
+    // Ground the assembly with a soft blob contact shadow.
+    addShadowPlane(scene, model.min, model.max);
 
     // Triangle count is geometry-fixed, so compute it once for the stats overlay.
     const totalTriangles = model.meshes.reduce(

@@ -33,9 +33,9 @@ body {
      through, giving a soft product-shot gradient behind the model. */
   background: radial-gradient(
     120% 120% at 50% 30%,
-    #2b313d 0%,
-    #1a1d24 55%,
-    #0d0e12 100%
+    #aeb4be 0%,
+    #878d99 55%,
+    #5b616c 100%
   );
 }
 
@@ -400,6 +400,91 @@ body {
 }
 
 .stats__val {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ---------- Walk-mode instructions popup ---------- */
+.walk-hint {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  width: min(300px, calc(100vw - 32px));
+  padding: 16px 18px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Toggled on/off from main.ts; [hidden] removes it from layout entirely. */
+.walk-hint.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.walk-hint[hidden] {
+  display: none;
+}
+
+.walk-hint__close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.walk-hint__close:hover {
+  color: var(--text);
+}
+
+.walk-hint__title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.walk-hint__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.walk-hint__list kbd {
+  display: inline-block;
+  min-width: 18px;
+  margin-right: 3px;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+}
+
+.walk-hint__list strong {
   color: var(--text);
   font-weight: 500;
 }

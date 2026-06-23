@@ -78,6 +78,15 @@
             <ul id="searchResults" class="search-results" role="listbox" hidden></ul>
           </div>
           <button
+            id="walkBtn"
+            class="btn"
+            type="button"
+            aria-pressed="false"
+            title="Walk mode — W/A/S/D or arrows to walk, move mouse to look (Esc releases)"
+          >
+            Walk
+          </button>
+          <button
             id="statsBtn"
             class="btn"
             type="button"
@@ -91,6 +100,25 @@
           </button>
         </div>
       </header>
+
+      <!-- Walk-mode controls hint (shown when entering walk mode) -->
+      <div id="walkHint" class="walk-hint" role="status" aria-live="polite" hidden>
+        <button
+          id="walkHintClose"
+          class="walk-hint__close"
+          type="button"
+          aria-label="Dismiss walk instructions"
+        >
+          ×
+        </button>
+        <p class="walk-hint__title">Walk mode</p>
+        <ul class="walk-hint__list">
+          <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys — walk</li>
+          <li>Move the mouse — look around</li>
+          <li><kbd>Esc</kbd> — release the mouse · click to re-capture</li>
+          <li><kbd>R</kbd> or <strong>Reset view</strong> — back to orbit</li>
+        </ul>
+      </div>
 
       <!-- Selection info panel -->
       <aside id="infoPanel" class="panel panel--empty" aria-live="polite">

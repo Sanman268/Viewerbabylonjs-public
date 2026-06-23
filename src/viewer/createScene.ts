@@ -39,16 +39,16 @@ export function createScene(canvas: HTMLCanvasElement): ViewerContext {
     `${import.meta.env.BASE_URL}environment.env`,
     scene
   );
-  scene.environmentIntensity = 1.0;
+  scene.environmentIntensity = 1.4;
 
   // Soft ambient fill so shadowed faces stay legible alongside the IBL.
   const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
-  hemi.intensity = 0.5;
-  hemi.groundColor = new Color3(0.25, 0.27, 0.3);
+  hemi.intensity = 0.85;
+  hemi.groundColor = new Color3(0.4, 0.42, 0.45);
 
   // Single directional key light for form and specular highlights.
   const key = new DirectionalLight("key", new Vector3(-0.5, -1, -0.6), scene);
-  key.intensity = 1.0;
+  key.intensity = 1.4;
 
   return { engine, scene };
 }

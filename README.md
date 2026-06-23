@@ -13,8 +13,14 @@ highlights the selected part, and shows a part information panel with mesh-deriv
 
 * GLB loading with loading progress and error fallback.
 * Automatic model centering and camera framing on load.
-* Smooth orbit and zoom controls with sensible limits.
-* Reset view button and `R` keyboard shortcut.
+* Two camera modes:
+  * **Orbit** (default) — smooth orbit and zoom controls with sensible limits.
+  * **Walk** — first-person mode: `W` `A` `S` `D` / arrow keys to walk on the
+    ground, pointer-lock mouse look, gravity and an eye-height collider so it
+    moves like a person in a game. A dismissable on-screen popup lists the
+    controls on entry.
+* Reset view button and `R` keyboard shortcut (also returns to orbit mode).
+* Soft "blob" contact shadow under the model to ground the assembly.
 * Click / tap part selection with non-destructive highlight.
 * Hover highlight with a part-name tooltip on desktop (mouse) pointers.
 * Click empty space or press `Esc` to clear selection.
@@ -85,6 +91,7 @@ src/
     camera.ts
     loadModel.ts
     selection.ts
+    shadowPlane.ts
   ui/
     infoPanel.ts
     loadingOverlay.ts
@@ -115,10 +122,35 @@ A lighter model variant is used for mobile / touch devices to reduce load and re
 
 ### Camera controls
 
-The viewer uses an orbit camera so the model stays centered while the user rotates and zooms. 
-Zoom limits are applied to avoid clipping into the model or zooming too far away.
+The viewer has two camera modes managed by a single controller.
 
-The reset control returns the camera to a good default view.
+**Orbit** (default) uses an arc-rotate camera so the model stays centered while
+the user rotates and zooms. Zoom limits are applied to avoid clipping into the
+model or zooming too far away.
+
+**Walk** is a first-person camera. Movement is a custom horizontal walker driven
+by `W` `A` `S` `D` / arrow keys, so looking up or down never lifts the player off
+the ground — gravity and an ellipsoid collider keep it standing on an invisible
+floor at eye level. Look is handled with pointer lock, so moving the mouse turns
+the view continuously like a game (`Esc` releases the cursor; clicking re-captures
+it). Eye height, walk speed, the collider and the floor are all scaled to the
+model size on load, and the player spawns standing where the orbit camera was
+looking from.
+
+Switching to walk mode shows a small controls popup; it stays until dismissed,
+and starting to move (or the close button) dismisses it for the session.
+
+The reset control (button or `R`) returns to orbit mode and animates the camera
+back to a good default view.
+
+### Contact shadow
+
+A soft "blob" shadow is drawn on a flat plane at the base of the model to ground
+it. Rather than a real shadow-map cast — which would produce a hard, holey
+silhouette for an open frame like this assembly — a radial gradient (dark at the
+center, fading to transparent) is baked once into a texture. This gives an even,
+diffuse product-shot shadow while letting the CSS gradient backdrop show through,
+and costs nothing per frame (no shadow rendering).
 
 ### Selection and highlight
 
@@ -140,6 +172,8 @@ are computed from the selected Babylon mesh data.
 ### Mobile behavior
 
 The viewer supports touch rotation, pinch zoom, and tap selection. A small inline boot style prevents a flash of unstyled HTML before the application CSS and loading overlay are ready.
+
+Walk mode is designed for keyboard and mouse (pointer lock), so it is intended for desktop use.
 
 ---
 
